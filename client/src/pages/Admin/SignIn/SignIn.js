@@ -12,8 +12,8 @@ export default function SignIn() {
   const { Content } = Layout;
   const { TabPane } = Tabs;
 
-  if(getAccessTokenApi()) {
-    return <Redirect to="/admin"/>
+  if (getAccessTokenApi()) {
+    return <Redirect to="/admin" />;
   }
   return (
     <Layout className="sign-in">
