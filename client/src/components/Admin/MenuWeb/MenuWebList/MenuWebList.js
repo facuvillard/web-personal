@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Switch, List, Button, Modal as ModalAntd, notification } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
-import { Modal } from "../../../Modal";
+import Modal from "../../../Modal";
 import DragSortableList from "react-drag-sortable";
-import { updateMenuApi } from "../../../../api/menu";
+import {
+  updateMenuApi,
+  activateMenuApi,
+  deleteMenuApi,
+} from "../../../../api/menu";
 import { getAccessTokenApi } from "../../../../api/auth";
+import AddMenuWebForm from "../AddMenuWebForm";
+import EditMenuWebForm from "../EditMenuWebForm";
 
 import "./MenuWebList.scss";
 
@@ -20,7 +26,16 @@ export default function MenuWebList(props) {
   useEffect(() => {
     const listItemsArray = [];
     menu.forEach((item) => {
-      listItemsArray.push({ content: <MenuItem item={item} /> });
+      listItemsArray.push({
+        content: (
+          <MenuItem
+            item={item}
+            activateMenu={activateMenu}
+            editMenuWebModal={editMenuWebModal}
+            deleteMenu={deleteMenu}
+          />
+        ),
+      });
     });
     setListItems(listItemsArray);
   }, [menu]);
@@ -35,29 +50,98 @@ export default function MenuWebList(props) {
       updateMenuApi(accessToken, _id, { order });
     });
   };
+
+  const activateMenu = (menu, status) => {
+    const accessToken = getAccessTokenApi();
+    activateMenuApi(accessToken, menu._id, status).then((response) => {
+      notification["success"]({ message: response });
+    });
+  };
+
+  const addMenuWebModal = () => {
+    setIsVisibleModal(true);
+    setModalTitle("Creando nuevo menu");
+    setModalContent(
+      <AddMenuWebForm
+        setIsVisibleModal={setIsVisibleModal}
+        setReloadMenuWeb={setReloadMenuWeb}
+      />
+    );
+  };
+
+  const editMenuWebModal = (menu) => {
+    setIsVisibleModal(true);
+    setModalTitle(`Editando menu: ${menu.title}`);
+    setModalContent(
+      <EditMenuWebForm
+        setIsVisibleModal={setIsVisibleModal}
+        setReloadMenuWeb={setReloadMenuWeb}
+        menu={menu}
+      />
+    );
+  };
+
+  const deleteMenu = (menu) => {
+    const accessToken = getAccessTokenApi();
+    confirm({
+      title: "Eliminando menu",
+      content: `¿Estas seguro de que quiere eliminar ${menu.title}?`,
+      okText: "Eliminar",
+      okType: "danger",
+      cancelText: "Cancelar",
+      onOk() {
+        deleteMenuApi(accessToken, menu._id)
+          .then((response) => {
+            notification["success"]({
+              message: response,
+            });
+            setReloadMenuWeb(true);
+          })
+          .catch((err) => {
+            notification["error"]({ message: "Error del servidor" });
+          });
+      },
+    });
+  };
+
   return (
     <div className="menu-web-list">
       <div className="menu-web-list__header">
-        <Button type="primary">Nuevo menú</Button>
+        <Button type="primary" onClick={addMenuWebModal}>
+          Nuevo menú
+        </Button>
       </div>
       <div className="menu-web-list__items">
         <DragSortableList items={listItems} onSort={onSort} type="vertical" />
       </div>
+
+      <Modal
+        title={modalTitle}
+        isVisible={isVisibleModal}
+        setIsVisible={setIsVisibleModal}
+      >
+        {modalContent}
+      </Modal>
     </div>
   );
 }
 
 function MenuItem(props) {
-  const { item } = props;
+  const { item, activateMenu, editMenuWebModal, deleteMenu } = props;
 
   return (
     <List.Item
       actions={[
-        <Switch defaultChecked={true} />,
-        <Button type="primary">
+        <Switch
+          defaultChecked={item.active}
+          onChange={(e) => {
+            activateMenu(item, e);
+          }}
+        />,
+        <Button onClick={() => editMenuWebModal(item)} type="primary">
           <EditOutlined />
         </Button>,
-        <Button type="danger">
+        <Button type="danger" onClick={() => deleteMenu(item)}>
           <DeleteOutlined />
         </Button>,
       ]}
