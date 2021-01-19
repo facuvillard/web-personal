@@ -9,17 +9,20 @@ export default function LayaoutBasic(props) {
     const { Footer } = Layout;
 
     return (
-        <Row>
-            <Col lg={4} />
-            <Col lg={16}>
-                <MenuTop />
-                <LoadRoutes routes={routes} />
-                <Footer>
-                    Facundo Villard
+        <>
+            <Row>
+                <Col lg={4} />
+                <Col lg={16}>
+                    <MenuTop />
+
+                </Col>
+                <Col lg={4} />
+            </Row>
+            <LoadRoutes routes={routes} />
+            <Footer>
+                Facundo Villard
                 </Footer>
-            </Col>
-            <Col lg={4} />
-        </Row>
+        </>
     )
 }
 function LoadRoutes({ routes }) {
